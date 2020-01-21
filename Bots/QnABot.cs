@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,20 +60,37 @@ namespace Microsoft.BotBuilderSamples.Bots
             // First time around this is set to false, so we will prompt user for name.
             if (string.IsNullOrEmpty(userProfile.Name))
             {
-                userProfile.Name = turnContext.Activity.Text?.Trim();
+                if(conversationData.PromptedUserForName)
+                {
+                    userProfile.Name = turnContext.Activity.Text?.Trim();
 
-                //Acknowledge that we got their name
+                    //Acknowledge that we got their name
 
-                await turnContext.SendActivityAsync($"Good morning {userProfile.Name}!! You can now login by using '#imin'. ");
-                conversationData.PromptedUserForName = false;
+                    await turnContext.SendActivityAsync($"Good morning {userProfile.Name}!! You can now login by using '#imin'. ");
+                    conversationData.PromptedUserForName = false;
+                }
+                else
+                {
+                    //Prompt the user for their name
+                    await turnContext.SendActivityAsync($"What would you like me to call you?");
+
+                    //set the flag to true so we don't prompt in the next run.
+                    conversationData.PromptedUserForName = true;
+                }
             }
             else
             {
-                //Prompt the user for their name
-                await turnContext.SendActivityAsync($"What would you like me to call you?");
+                // Add message details to the conversation data.
+                // Convert saved Timestamp to local DateTimeOffset, then to string for display.
+                var messageTimeOffset = (DateTimeOffset)turnContext.Activity.Timestamp;
+                var localMessageTime = messageTimeOffset.ToLocalTime();
+                conversationData.Timestamp = localMessageTime.ToString();
+                conversationData.ChannelId = turnContext.Activity.ChannelId.ToString();
 
-                //set the flag to true so we don't prompt in the next run.
-                conversationData.PromptedUserForName = true;
+                // Display state data.
+                await turnContext.SendActivityAsync($"{userProfile.Name} sent: {turnContext.Activity.Text}");
+                await turnContext.SendActivityAsync($"Message received at: {conversationData.Timestamp}");
+                await turnContext.SendActivityAsync($"Message received from: {conversationData.ChannelId}");
             }
         }
     }
