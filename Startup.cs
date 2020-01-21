@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.Azure;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.BotBuilderSamples.Bots;
 using Microsoft.BotBuilderSamples.Dialog;
@@ -36,8 +37,17 @@ namespace Microsoft.BotBuilderSamples
             // Create the storage we'll be using for User and Conversation state. (Memory is great for testing purposes.)
             services.AddSingleton<IStorage, MemoryStorage>();
 
+            var storage = new AzureBlobStorage("DefaultEndpointsProtocol=https;AccountName=botstorage012312;AccountKey=UIKP8IpitPztgYKMfs5vfDGjXr1FrSJEfk84LSlHZdREWGOp4TlyLiFIGx+xQF3tJwxsOrJ8bSa/1w8ZfC4fdg==;EndpointSuffix=core.windows.net", "bot-state");
+
             // Create the User state. (Used in this bot's Dialog implementation.)
+
+            var userState = new UserState(storage);
+            services.AddSingleton(userState);
+
             services.AddSingleton<UserState>();
+
+            var conversationState = new ConversationState(storage);
+            services.AddSingleton(conversationState);
 
             // Create the Conversation state. (Used by the Dialog system itself.)
             services.AddSingleton<ConversationState>();

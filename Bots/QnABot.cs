@@ -33,9 +33,6 @@ namespace Microsoft.BotBuilderSamples.Bots
             await UserState.SaveChangesAsync(turnContext, false, cancellationToken);
         }
 
-        protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken) =>
-            // Run the Dialog with the new message Activity.
-            await Dialog.RunAsync(turnContext, ConversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
 
         protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
         {
@@ -45,6 +42,37 @@ namespace Microsoft.BotBuilderSamples.Bots
                 {
                     await turnContext.SendActivityAsync(MessageFactory.Text($"Hello and welcome!"), cancellationToken);
                 }
+            }
+        }
+        protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
+        {
+            // Run the Dialog with the new message Activity.
+            // => await Dialog.RunAsync(turnContext, ConversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
+
+            // Get the state properties from the turn context.
+            var conversationsAccessors = ConversationState.CreateProperty<ConversationData>(nameof(ConversationData));
+            var conversationData = await conversationsAccessors.GetAsync(turnContext, () => new ConversationData());
+
+            var userStateAccessors = UserState.CreateProperty<UserProfile>(nameof(UserProfile));
+            var userProfile = await userStateAccessors.GetAsync(turnContext, () => new UserProfile());
+
+            // First time around this is set to false, so we will prompt user for name.
+            if (string.IsNullOrEmpty(userProfile.Name))
+            {
+                userProfile.Name = turnContext.Activity.Text?.Trim();
+
+                //Acknowledge that we got their name
+
+                await turnContext.SendActivityAsync($"Good morning {userProfile.Name}!! You can now login by using '#imin'. ");
+                conversationData.PromptedUserForName = false;
+            }
+            else
+            {
+                //Prompt the user for their name
+                await turnContext.SendActivityAsync($"What would you like me to call you?");
+
+                //set the flag to true so we don't prompt in the next run.
+                conversationData.PromptedUserForName = true;
             }
         }
     }
