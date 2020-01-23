@@ -21,7 +21,7 @@ namespace Microsoft.BotBuilderSamples.Dialog
         // Dialog Options parameters
         public const float DefaultThreshold = 0.3F;
         public const int DefaultTopN = 3;
-        public const string DefaultNoAnswer = "No QnAMaker answers found.";
+        public const string DefaultNoAnswer = "A bot understands only little.";
 
         // Card parameters
         public const string DefaultCardTitle = "Did you mean:";
